@@ -1,11 +1,10 @@
 @TaskManagerPro_HostAddress = http://localhost:5179
 
-GET {{TaskManagerPro_HostAddress}}/weatherforecast/
-Accept: application/json
 
 ###
 POST {{TaskManagerPro_HostAddress}}/taskManagerPro/Task
 Content-Type: application/json
+
 {
   "title": "Aprender Arquitectura Hexagonal",
   "description": "Terminar el backend con Francisco de IA",
