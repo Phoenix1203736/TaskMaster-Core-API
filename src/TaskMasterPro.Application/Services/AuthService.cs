@@ -47,11 +47,13 @@ public class AuthService
         throw new NotImplementedException();
     }
     
-    public async Task<AuthRecordDto> Login(LoginRequestDto loginRequestDto)
+    public async Task<AuthRecordDto?> Login(LoginRequestDto loginRequestDto)
     {
 
         var user = await _userRepository.GetByEmailAsync(loginRequestDto.Email);
+#pragma warning disable CS8603 // Possible null reference return.
         if (user == null) return null;
+#pragma warning restore CS8603 // Possible null reference return.
         
         var isPasswordValid = _passwordHasher.Verify(loginRequestDto.Password, user.Password);
         

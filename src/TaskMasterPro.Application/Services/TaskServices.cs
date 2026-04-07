@@ -7,10 +7,12 @@ namespace TaskManagerPro.TaskMasterPro.Application.Services;
 public class TaskServices
 {
     private readonly ITaskRepository _taskRepository;
+    private readonly IIdGenerator _idGenerator;
 
-    public TaskServices(ITaskRepository taskRepository)
+    public TaskServices(ITaskRepository taskRepository, IIdGenerator idGenerator)
     {
         _taskRepository = taskRepository;
+        _idGenerator = idGenerator;
     }
 
     public async Task<IEnumerable<TaskItemDto>> GetUserTasksAsync(Guid userId)
@@ -21,8 +23,8 @@ public class TaskServices
         // 2. MAPEO MANUAL: Convertimos de Entity a DTO
         // Esto quita el error de "Cannot convert IEnumerable<TaskEntity>..."
         return entities.Select(t => new TaskItemDto(
-            t.Id, 
-            t.Title, 
+            t.Id,
+            t.Title,
             t.Description
         ));
     }
@@ -32,7 +34,7 @@ public class TaskServices
         // Aquí ya lo tenías bien: conviertes DTO + UserId -> Entity
         TaskEntity entity = new TaskEntity()
         {
-            Id = Guid.NewGuid(), // Siempre genera un ID nuevo para creaciones
+            Id = _idGenerator.NewId(), // Siempre genera un ID nuevo para creaciones
             Title = taskItemDto.Title,
             Description = taskItemDto.Description,
             UserId = userId,
@@ -58,7 +60,7 @@ public class TaskServices
     }
 
     // FIX: Cambiamos 'int' por 'Guid'
-    public async Task DeleteTaskAsync(Guid taskId) 
+    public async Task DeleteTaskAsync(Guid taskId)
     {
         await _taskRepository.DeleteAsync(taskId);
     }
