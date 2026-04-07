@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using TaskManagerPro.TaskManagerPro.Interfaces;
 using TaskManagerPro.TaskMasterPro.Application.Services;
 using TaskManagerPro.TaskMasterPro.Infrastructure;
+using TaskManagerPro.TaskMasterPro.Infrastructure.Common;
 using TaskManagerPro.TaskMasterPro.Infrastructure.Repositories;
 using TaskManagerPro.TaskMasterPro.Infrastructure.Services; // Agregado
 
@@ -36,7 +37,7 @@ public class Program
         builder.Services.AddScoped<IPasswordHasher, BCryptHasher>();
         // 3. INDISPENSABLE: Registrar el Servicio (El que inyectaste en el Controller)
         builder.Services.AddScoped<TaskServices>();
-
+        builder.Services.AddSingleton<IIdGenerator, IdGenerator>();
 //4. builder service for jwt 
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -50,7 +51,7 @@ public class Program
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException()))
                 };
             });
         builder.Services.AddOpenApi();

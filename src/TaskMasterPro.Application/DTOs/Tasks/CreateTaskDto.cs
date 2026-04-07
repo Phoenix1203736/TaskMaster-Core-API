@@ -3,5 +3,5 @@
 public interface CreateTaskDto
 {
     string Title { get; init; }
-    string Description { get; init; }
+    string? Description { get; init; }
 }

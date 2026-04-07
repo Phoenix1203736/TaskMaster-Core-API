@@ -18,14 +18,20 @@
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" />
         <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.17.0" />
+        <PackageReference Include="NSubstitute" Version="5.3.0" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
+        <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="test\TaskMasterPro.Application.Tests\" />
-      <Folder Include="test\TaskMasterPro.Domain.Tests\" />
-      <Folder Include="test\TaskMasterPro.Infrastructure.Tests\" />
+      <Folder Include="test\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="test\TaskMasterPro.Application.Tests\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="test\TaskMasterPro.Application.Tests\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="test\TaskMasterPro.Application.Tests\obj\test.csproj.nuget.dgspec.json" />
     </ItemGroup>
 
 </Project>
