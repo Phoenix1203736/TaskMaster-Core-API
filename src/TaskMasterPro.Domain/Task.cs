@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace TaskManagerPro.TaskMasterPro.Domain;
 
-public class TaskEntity
+public class Task
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
@@ -16,5 +16,5 @@ public class TaskEntity
     // 2. Esta es la clave lógica (el objeto). 
     [ForeignKey("UserId")]
     [JsonIgnore] // Para que no te vuelva a dar el error 400 de antes
-    public UserEntity? User { get; set; }
+    public User? User { get; set; }
 }

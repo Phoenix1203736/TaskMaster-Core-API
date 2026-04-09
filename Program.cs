@@ -1,74 +1,90 @@
-// ... (Tus usings) ...
-
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using TaskManagerPro.TaskManagerPro.Interfaces;
+using TaskManagerPro.TaskMasterPro.Application.Common.Interfaces;
 using TaskManagerPro.TaskMasterPro.Application.Services;
+using TaskManagerPro.TaskMasterPro.Domain.Interfaces;
 using TaskManagerPro.TaskMasterPro.Infrastructure;
+using TaskManagerPro.TaskMasterPro.Infrastructure.Auth;
 using TaskManagerPro.TaskMasterPro.Infrastructure.Common;
 using TaskManagerPro.TaskMasterPro.Infrastructure.Repositories;
-using TaskManagerPro.TaskMasterPro.Infrastructure.Services; // Agregado
+using TaskManagerPro.TaskMasterPro.Infrastructure.Services;
 
-public class Program
-{
-    public static void Main(string[] args)
+var builder = WebApplication.CreateBuilder(args);
+
+// =========================================================================
+// 1. CONFIGURACIÓN DE BASE DE DATOS (MariaDB)
+// =========================================================================
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var serverVersion = new MariaDbServerVersion(new Version(12, 2, 2));
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(connectionString, serverVersion));
+
+// =========================================================================
+// 2. REGISTRO DE REPOSITORIOS (Persistencia de Datos)
+// =========================================================================
+// Estos son los que hablan con la base de datos
+builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>(); // <-- Faltaba este cable
+
+// =========================================================================
+// 3. SERVICIOS DE INFRAESTRUCTURA (Herramientas Externas)
+// =========================================================================
+builder.Services.AddScoped<IPasswordHasher, BCryptHasher>();
+builder.Services.AddScoped<ITokenService, GenerateTokenService>(); // <-- Registrado por interfaz
+builder.Services.AddSingleton<IIdGenerator, IdGenerator>();
+
+// =========================================================================
+// 4. SERVICIOS DE APLICACIÓN (Lógica de Negocio / Casos de Uso)
+// =========================================================================
+// Estos orquestan la lógica que consumen los controladores
+builder.Services.AddScoped<TaskServices>();
+builder.Services.AddScoped<AuthService>(); // <-- Faltaba este cable para el AuthController
+
+// =========================================================================
+// 5. CONFIGURACIÓN DE AUTENTICACIÓN Y JWT
+// =========================================================================
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        var builder = WebApplication.CreateBuilder(args);
-
-        // 1. INDISPENSABLE: Registrar los Controladores
-        builder.Services.AddControllers();
-
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        var serverVersion = new MariaDbServerVersion(new Version(12, 2, 2));
-        // Dile al contenedor de dependencias que sepa crear tu servicio
-        builder.Services.AddScoped<GenerateTokenService>();
-        builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseMySql(connectionString, serverVersion));
-
-        builder.Services.AddAuthorization();
-
-        // 2. REGISTRAR LOS REPOS (Ya lo tenías)
-        builder.Services.AddScoped<ITaskRepository, TaskRepository>();
-        builder.Services.AddScoped<IUserRepository, UserRepository>();
-        builder.Services.AddScoped<IPasswordHasher, BCryptHasher>();
-        // 3. INDISPENSABLE: Registrar el Servicio (El que inyectaste en el Controller)
-        builder.Services.AddScoped<TaskServices>();
-        builder.Services.AddSingleton<IIdGenerator, IdGenerator>();
-//4. builder service for jwt 
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true, // Esto verifica que no haya expirado
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException()))
-                };
-            });
-        builder.Services.AddOpenApi();
-
-        var app = builder.Build();
-
-        if (app.Environment.IsDevelopment())
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            app.MapOpenApi();
-        }
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true, // Verifica expiración
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ??
+                                       throw new InvalidOperationException("JWT Key missing!")))
+        };
+    });
 
-        app.UseHttpsRedirection();
-        app.UseAuthorization();
+builder.Services.AddAuthorization();
+builder.Services.AddControllers();
+builder.Services.AddOpenApi(); // Swagger/OpenAPI
 
-        // 4. INDISPENSABLE: Mapear los Controladores a las rutas
-        app.MapControllers();
+// =========================================================================
+// 6. PIPELINE DE LA APLICACIÓN (Middleware)
+// =========================================================================
+var app = builder.Build();
 
-        app.Run();
-    }
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
 }
+
+app.UseHttpsRedirection();
+
+// IMPORTANTE: El orden aquí importa. Primero Autenticación, luego Autorización.
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

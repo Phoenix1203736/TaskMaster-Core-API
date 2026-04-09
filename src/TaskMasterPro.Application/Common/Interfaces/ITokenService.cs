@@ -1,8 +1,10 @@
-﻿using TaskManagerPro.TaskMasterPro.Domain;
+﻿using TaskManagerPro.TaskMasterPro.Application.DTOs.Auth;
+using TaskManagerPro.TaskMasterPro.Domain;
+using Task = System.Threading.Tasks.Task;
 
-namespace TaskManagerPro.TaskManagerPro.Interfaces;
+namespace TaskManagerPro.TaskMasterPro.Application.Common.Interfaces;
 
 public interface ITokenService
 {
-    string GenerateToken(UserEntity userEntity);
+    Task<AuthResponseDto> GenerateTokensAsync(User user);
 }

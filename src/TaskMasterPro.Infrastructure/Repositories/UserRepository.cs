@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskManagerPro.TaskManagerPro.Interfaces;
 using TaskManagerPro.TaskMasterPro.Application.DTOs.Auth;
 using TaskManagerPro.TaskMasterPro.Domain;
+using Task = System.Threading.Tasks.Task;
 
 namespace TaskManagerPro.TaskMasterPro.Infrastructure.Repositories;
 
@@ -19,14 +20,14 @@ public class UserRepository : IUserRepository
     }
 
     // Buscamos usando una expresión Lambda porque el Email no es la Llave Primaria
-    public async Task<UserEntity?> GetByEmailAsync(string email)
+    public async Task<User?> GetByEmailAsync(string email)
     {
         return await _context.User
             .FirstOrDefaultAsync(u => u.Email == email);
     }
 
 
-    public async Task AddAsync(UserEntity user)
+    public async Task AddAsync(User user)
     {
         await _context.User.AddAsync(user);
         await _context.SaveChangesAsync();

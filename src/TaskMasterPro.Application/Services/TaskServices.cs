@@ -1,6 +1,7 @@
 ﻿using TaskManagerPro.TaskManagerPro.Interfaces;
 using TaskManagerPro.TaskMasterPro.Application.DTOs.Tasks;
 using TaskManagerPro.TaskMasterPro.Domain;
+using Task = TaskManagerPro.TaskMasterPro.Domain.Task;
 
 namespace TaskManagerPro.TaskMasterPro.Application.Services;
 
@@ -21,7 +22,7 @@ public class TaskServices
         var entities = await _taskRepository.GetAllByUserIdAsync(userId);
 
         // 2. MAPEO MANUAL: Convertimos de Entity a DTO
-        // Esto quita el error de "Cannot convert IEnumerable<TaskEntity>..."
+        // Esto quita el error de "Cannot convert IEnumerable<Task>..."
         return entities.Select(t => new TaskItemDto(
             t.Id,
             t.Title,
@@ -29,10 +30,10 @@ public class TaskServices
         ));
     }
 
-    public async Task CreateTaskAsync(TaskItemDto taskItemDto, Guid userId)
+    public async System.Threading.Tasks.Task CreateTaskAsync(TaskItemDto taskItemDto, Guid userId)
     {
         // Aquí ya lo tenías bien: conviertes DTO + UserId -> Entity
-        TaskEntity entity = new TaskEntity()
+        Task entity = new Task()
         {
             Id = _idGenerator.NewId(), // Siempre genera un ID nuevo para creaciones
             Title = taskItemDto.Title,
@@ -43,12 +44,12 @@ public class TaskServices
         await _taskRepository.AddAsync(entity);
     }
 
-    public async Task UpdateTaskAsync(TaskItemDto taskDto)
+    public async System.Threading.Tasks.Task UpdateTaskAsync(TaskItemDto taskDto)
     {
         // FIX: No podemos mandar el DTO directo. Creamos la entidad.
         // En un nivel más pro, primero buscarías la tarea en la DB y luego la actualizarías,
         // pero para que compile y funcione el mapeo:
-        var entity = new TaskEntity()
+        var entity = new Task()
         {
             Id = taskDto.Id,
             Title = taskDto.Title,
@@ -60,7 +61,7 @@ public class TaskServices
     }
 
     // FIX: Cambiamos 'int' por 'Guid'
-    public async Task DeleteTaskAsync(Guid taskId)
+    public async System.Threading.Tasks.Task DeleteTaskAsync(Guid taskId)
     {
         await _taskRepository.DeleteAsync(taskId);
     }

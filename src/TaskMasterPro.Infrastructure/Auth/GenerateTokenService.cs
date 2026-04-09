@@ -1,52 +1,76 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
-using TaskManagerPro.TaskManagerPro.Interfaces;
+using Microsoft.IdentityModel.Tokens;
+using TaskManagerPro.TaskMasterPro.Application.Common.Interfaces;
+using TaskManagerPro.TaskMasterPro.Application.DTOs.Auth;
 using TaskManagerPro.TaskMasterPro.Domain;
+using TaskManagerPro.TaskMasterPro.Domain.Interfaces;
 
-namespace TaskManagerPro.TaskMasterPro.Infrastructure.Services;
+
+namespace TaskManagerPro.TaskMasterPro.Infrastructure.Auth;
 
 public class GenerateTokenService : ITokenService
 {
     private readonly IConfiguration _config;
+    private readonly IRefreshTokenRepository _refreshTokenRepo;
 
-    // El "Portero" que recibe la configuración del appsettings.json
-    public GenerateTokenService(IConfiguration config)
+    public GenerateTokenService(IConfiguration config, IRefreshTokenRepository refreshTokenRepo)
     {
         _config = config;
+        _refreshTokenRepo = refreshTokenRepo;
     }
 
-    public string GenerateToken(UserEntity userEntity)
+    // ESTE ES EL ÚNICO MÉTODO PÚBLICO QUE NECESITAMOS
+    public async Task<AuthResponseDto> GenerateTokensAsync(User user)
     {
+        var accessToken = CreateJwtToken(user);
+        var refreshTokenString = Guid.NewGuid().ToString();
+
+        var refreshTokenEntity = new RefreshToken
         {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, userEntity.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            };
+            Token = refreshTokenString,
+            UserId = user.Id,
+            ExpiryDate = DateTime.UtcNow.AddDays(7), // Aquí ya no marcará error
+            CreatedDate = DateTime.UtcNow
+        };
 
-            // Ahora sí, sacamos la llave del appsettings.json
-            var keyString = _config["Jwt:Key"];
-            if (keyString != null)
-            {
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+        await _refreshTokenRepo.SaveAsync(refreshTokenEntity);
 
-                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-                var token = new JwtSecurityToken(
-                    issuer: _config["Jwt:Issuer"],
-                    audience: _config["Jwt:Audience"],
-                    claims: claims,
-                    expires: DateTime.UtcNow.AddHours(2),
-                    signingCredentials: creds
-                );
-
-                return new JwtSecurityTokenHandler().WriteToken(token);
-            }
-
-            return null;
-        }
+        return new AuthResponseDto
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshTokenString
+        };
     }
+
+    // MÉTODO PRIVADO: Nadie fuera de esta clase necesita saber cómo se hace el JWT
+    private string CreateJwtToken(User user)
+    {
+        var keyString = _config["Jwt:Key"];
+        if (string.IsNullOrEmpty(keyString)) return string.Empty;
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim("userId", user.Id.ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(15), 
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    
 }

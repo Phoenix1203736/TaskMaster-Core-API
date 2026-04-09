@@ -22,7 +22,7 @@ namespace TaskManagerPro.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.RefreshTokenEntity", b =>
+            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -51,7 +51,7 @@ namespace TaskManagerPro.Migrations
                     b.ToTable("RefreshTokenEntities");
                 });
 
-            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.TaskEntity", b =>
+            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.Task", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -77,7 +77,7 @@ namespace TaskManagerPro.Migrations
                     b.ToTable("Task");
                 });
 
-            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.UserEntity", b =>
+            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -96,9 +96,9 @@ namespace TaskManagerPro.Migrations
                     b.ToTable("User");
                 });
 
-            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.RefreshTokenEntity", b =>
+            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.RefreshToken", b =>
                 {
-                    b.HasOne("TaskManagerPro.TaskMasterPro.Domain.UserEntity", "User")
+                    b.HasOne("TaskManagerPro.TaskMasterPro.Domain.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -107,9 +107,9 @@ namespace TaskManagerPro.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.TaskEntity", b =>
+            modelBuilder.Entity("TaskManagerPro.TaskMasterPro.Domain.Task", b =>
                 {
-                    b.HasOne("TaskManagerPro.TaskMasterPro.Domain.UserEntity", "User")
+                    b.HasOne("TaskManagerPro.TaskMasterPro.Domain.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace TaskManagerPro.TaskMasterPro.Domain;
 
-public class RefreshTokenEntity
+public class RefreshToken
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
@@ -11,7 +11,9 @@ public class RefreshTokenEntity
     public DateTime Expires { get; set; }
     public DateTime Created { get; set; }
     public bool IsValid { get; set; }
+    public DateTime ExpiryDate { get; set; }
+    public DateTime CreatedDate { get; set; }
     [ForeignKey("UserId")]
     [JsonIgnore] // Para que no te vuelva a dar el error 400 de antes
-    public UserEntity? User { get; set; }
+    public User? User { get; set; }
 }

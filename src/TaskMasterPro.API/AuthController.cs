@@ -34,4 +34,14 @@ public class AuthController : ControllerBase
 
         return null!;
     }
+
+
+    [HttpPost("register")]
+    public async Task<IActionResult> register()
+    {
+        
+        
+        
+        return null;
+    }
 }
