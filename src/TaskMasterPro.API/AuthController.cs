@@ -7,7 +7,7 @@ using TaskManagerPro.TaskMasterPro.Application.Services;
 namespace TaskManagerPro.TaskMasterPro.API;
 
 [ApiController]
-[Route("/Auth/[controller]")]
+[Route("/api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
@@ -38,7 +38,12 @@ public class AuthController : ControllerBase
         return null!;
     }
 
-
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] RefreshRequestDto request)
+    {
+        await _authService.Logout(request.RefreshToken);
+        return Ok(new { message = "Logout succesful" });
+    }
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRecordDto? registerRecordDto)
     {

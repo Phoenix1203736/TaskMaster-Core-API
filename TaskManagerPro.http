@@ -7,8 +7,36 @@ Content-Type: application/json
 
 {
   "title": "Aprender Arquitectura Hexagonal",
-  "description": "Terminar el backend con Francisco de IA",
+  "description": "Terminar el backend con test de IA",
   "userId": 1
 }
 ###
 GET {{TaskManagerPro_HostAddress}}/taskManagerPro/Task/1
+
+### 1. Registrar un nuevo usuario
+POST {{TaskManagerPro_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "paco.ingeniero@test.com",
+  "password": "Password123!",
+  "passwordverfication": "Password123!"
+}
+
+### 2. Login (De aquí sacarás el AccessToken y el RefreshToken)
+# @name login
+POST {{TaskManagerPro_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "paco.ingeniero@spain.com",
+  "password": "Password123!"
+}
+
+### 3. Refrescar el Token (Usa el RefreshToken que te dio el login)
+POST {{TaskManagerPro_HostAddress}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "PEGA_AQUÍ_EL_REFRESH_TOKEN_DEL_PASO_ANTERIOR"
+}

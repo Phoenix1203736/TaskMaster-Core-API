@@ -71,9 +71,14 @@ public class AuthService
         return null;
     }
 
-    public Task Logout()
+    public async Task Logout(string refreshToken)
     {
-        throw new NotImplementedException();
+        var storedToken = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
+        if (storedToken!=null)
+        {
+            storedToken.IsValid = true;
+            await _refreshTokenRepository.UpdateAsync(storedToken);
+        }
     }
 
     public async Task<AuthResponseDto?> RefreshToken(RefreshRequestDto request)
