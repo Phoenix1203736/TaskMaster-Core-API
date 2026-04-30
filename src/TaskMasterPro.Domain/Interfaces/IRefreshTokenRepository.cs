@@ -6,4 +6,5 @@ public interface IRefreshTokenRepository
     Task<RefreshToken?> GetByTokenAsync(string token);
 
     Task<User?> DeleteTokensAsync(User user);
+    System.Threading.Tasks.Task UpdateAsync(RefreshToken token);
 }

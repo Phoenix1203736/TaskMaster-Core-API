@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Mvc;
 using TaskManagerPro.TaskMasterPro.Application.DTOs.Auth;
 using TaskManagerPro.TaskMasterPro.Application.Services;
+
 
 namespace TaskManagerPro.TaskMasterPro.API;
 
@@ -16,6 +18,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [SuppressMessage("ReSharper", "NullableWarningSuppressionIsUsed")]
     public async Task<IActionResult> Login(LoginRequestDto? loginRequestDto)
     {
         if (loginRequestDto == null) return BadRequest("Login data is required.");
@@ -57,6 +60,23 @@ public class AuthController : ControllerBase
         }
 
 
+#pragma warning disable CS8603 // Possible null reference return.
         return null;
+#pragma warning restore CS8603 // Possible null reference return.
+    }
+
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshRequestDto request)
+    {
+        try
+        {
+            var response = await _authService.RefreshToken(request);
+            if (response == null) return Unauthorized(new { message = "Token invalid" });
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new {message = ex.Message});
+        }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskManagerPro.TaskManagerPro.Interfaces;
 using TaskManagerPro.TaskMasterPro.Application.DTOs.Auth;
 using TaskManagerPro.TaskMasterPro.Domain;
+using TaskManagerPro.TaskMasterPro.Domain.Interfaces;
 using Task = System.Threading.Tasks.Task;
 
 namespace TaskManagerPro.TaskMasterPro.Infrastructure.Repositories;
@@ -31,6 +32,11 @@ public class UserRepository : IUserRepository
     {
         await _context.User.AddAsync(user);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<User?> GetByIdAsync(Guid id)
+    {
+        return await _context.User.FindAsync(id);
     }
 
     // 1. El tipo de retorno debe ser Task<User> porque vas a devolver al usuario si todo sale bien

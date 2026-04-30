@@ -15,7 +15,7 @@ public class RefreshTokenRepository : IRefreshTokenRepository
         _context = context;
     }
 
-    public async Task SaveAsync(User user,RefreshToken refreshToken)
+    public async Task SaveAsync(User user, RefreshToken refreshToken)
     {
         await _context.Set<RefreshToken>().AddAsync(refreshToken);
         await _context.SaveChangesAsync();
@@ -33,5 +33,11 @@ public class RefreshTokenRepository : IRefreshTokenRepository
             .ExecuteDeleteAsync(); // Borra directamente en la DB sin cargar nada
 
         return user;
+    }
+
+    public async Task UpdateAsync(RefreshToken token)
+    {
+        _context.RefreshToken.Update(token);
+         await _context.SaveChangesAsync();
     }
 }

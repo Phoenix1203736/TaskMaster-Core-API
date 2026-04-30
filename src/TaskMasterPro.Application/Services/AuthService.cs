@@ -1,9 +1,10 @@
 ﻿using TaskManagerPro.TaskManagerPro.Interfaces;
+using TaskManagerPro.TaskMasterPro.Application.Common.Interfaces; // Para ITokenService
 using TaskManagerPro.TaskMasterPro.Application.DTOs.Auth;
 using TaskManagerPro.TaskMasterPro.Domain;
+using TaskManagerPro.TaskMasterPro.Domain.Interfaces; // Para IRefreshTokenRepository
 using TaskManagerPro.TaskMasterPro.Infrastructure.Auth;
-using TaskManagerPro.TaskMasterPro.Infrastructure.Repositories;
-using TaskManagerPro.TaskMasterPro.Infrastructure.Services;
+// Borramos las referencias a implementaciones concretas de la infraestructura aquí si no se usan
 using Task = System.Threading.Tasks.Task;
 
 namespace TaskManagerPro.TaskMasterPro.Application.Services;
@@ -12,61 +13,52 @@ public class AuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly GenerateTokenService _generateTokenService;
-    private readonly RefreshTokenRepository _refreshTokenRepository;
-    public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher,
-        GenerateTokenService generateTokenService, RefreshTokenRepository refreshTokenRepository)
+
+    // CAMBIO: Usamos las INTERFACES, no las clases
+    private readonly ITokenService _generateTokenService;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
+
+    public AuthService(
+        IUserRepository userRepository,
+        IPasswordHasher passwordHasher,
+        ITokenService generateTokenService, // CAMBIO: Interfaz
+        IRefreshTokenRepository refreshTokenRepository) // CAMBIO: Interfaz
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _generateTokenService = generateTokenService;
         _refreshTokenRepository = refreshTokenRepository;
     }
-    /*
-    public async Task<User?> Login(string email, string password)
-    {
-        var user = await _userRepository.GetByEmailAsync(email);
-        if (user == null) return null;
-        var isValid=_passwordHasher.Verify(password, user.Password);
-        return isValid ? user : null;
-
-    }
-    */
 
     public async Task<AuthResponseDto?> Register(RegisterRecordDto registerRecordDto)
     {
-        // 1. Validar contraseñas
         if (!registerRecordDto.Password.Equals(registerRecordDto.Passwordverfication))
             return null;
 
-        try {
-            // 2. Crear y guardar al usuario
-            var user = new User {
+        try
+        {
+            var user = new User
+            {
                 Email = registerRecordDto.Email,
                 Password = _passwordHasher.Hash(registerRecordDto.Password)
             };
             await _userRepository.AddAsync(user);
 
-            // 3. Generamos los tokens de una vez (GenerateTokensAsync ya guarda el refresh token)
+            // Ahora funciona perfectamente a través de la interfaz
             var authResponse = await _generateTokenService.GenerateTokensAsync(user);
 
             return authResponse;
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             throw new Exception("Error en el proceso de registro.");
         }
-    }
-    public Task Logout()
-    {
-        throw new NotImplementedException();
     }
 
     public async Task<AuthRecordDto?> Login(LoginRequestDto loginRequestDto)
     {
         var user = await _userRepository.GetByEmailAsync(loginRequestDto.Email);
-#pragma warning disable CS8603 // Possible null reference return.
         if (user == null) return null;
-#pragma warning restore CS8603 // Possible null reference return.
 
         var isPasswordValid = _passwordHasher.Verify(loginRequestDto.Password, user.Password);
 
@@ -77,5 +69,24 @@ public class AuthService
         }
 
         return null;
+    }
+
+    public Task Logout()
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<AuthResponseDto?> RefreshToken(RefreshRequestDto request)
+    {
+        var storedToken = await _refreshTokenRepository.GetByTokenAsync(request.RefreshToken);
+        if (storedToken == null) throw new Exception("The refresh Token doesn't exist");
+        if (storedToken.IsValid == false) throw new Exception("the token has been revoked");
+        if (storedToken.ExpiryDate < DateTime.UtcNow) throw new Exception("the refresh token has been expired");
+        var user = await _userRepository.GetByIdAsync(storedToken.UserId);
+        if (user == null) throw new Exception("user doesn't found");
+        storedToken.IsValid = true;
+        await _refreshTokenRepository.UpdateAsync(storedToken);
+        var authResponse = await _generateTokenService.GenerateTokensAsync(user);
+        return authResponse;
     }
 }
